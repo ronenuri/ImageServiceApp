@@ -17,7 +17,7 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, ImageService.class);
         startService(intent);
     }
-
+\\check
     public void stopServiceBtn(View view) {
         Intent intent = new Intent(this, ImageService.class);
         stopService(intent);

@@ -2,8 +2,11 @@ package imageservice.imageserviceapp;
 
 import android.app.Service;
 import android.content.Intent;
+import android.os.Environment;
 import android.os.IBinder;
 import android.widget.Toast;
+
+import java.io.File;
 
 public class ImageService extends Service {
 
@@ -11,6 +14,13 @@ public class ImageService extends Service {
     public void onCreate() {
         super.onCreate();
         // Put service code here
+        File dcim =
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM);
+        if (dcim == null) {
+            return;
+        }
+        File[] pics = dcim.listFiles();
+
     }
 
     @Override

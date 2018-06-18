@@ -1,22 +1,46 @@
 package imageservice.imageserviceapp;
 
+import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 
+import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
+
 public class MainActivity extends AppCompatActivity {
+
+    private final int REQUEST_PERMISSION = 1;
+    private Context context;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        context = this;
+        if (ContextCompat.checkSelfPermission(context, READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_PERMISSION);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        int storagePermission = ContextCompat.checkSelfPermission(context, READ_EXTERNAL_STORAGE);
+        if (storagePermission == PackageManager.PERMISSION_GRANTED) {
+            finish();
+            startActivity(getIntent());
+        } else {
+            finish();
+        }
     }
 
     public void startServiceBtn(View view) {
@@ -27,38 +51,6 @@ public class MainActivity extends AppCompatActivity {
     public void stopServiceBtn(View view) {
         Intent intent = new Intent(this, ImageService.class);
         stopService(intent);
-    }
-
-    public void displayNotification(View view) {
-        final int notify_id = 1;
-        final NotificationManager NM = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        final NotificationChannel channel;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            channel = new NotificationChannel("default","default", NotificationManager.IMPORTANCE_DEFAULT );
-            NM.createNotificationChannel(channel);
-        }
-        final NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "default");
-        builder.setSmallIcon(R.drawable.ic_launcher_foreground);
-        builder.setContentTitle("Transferring photos");
-        builder.setContentText("Transfer in progress");
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                int j;
-                for (j = 0; j <= 100; j += 20) {
-                    builder.setProgress(100, j, false);
-                    NM.notify(notify_id, builder.build());
-                    try {
-                        Thread.sleep(2 * 1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                }
-                }
-                builder.setProgress(0, 0, false);
-                builder.setContentText("Done");
-                NM.notify(notify_id, builder.build());
-            }
-        }).start();
     }
 }
 

@@ -28,11 +28,12 @@ public class ImageService extends Service {
 
     private BroadcastReceiver receiver;
     private final IntentFilter filter = new IntentFilter();
-    private TCPClient client;
+    private boolean firstTransfer;
 
     @Override
     public void onCreate() {
         super.onCreate();
+        this.firstTransfer = true;
     }
 
     @Override
@@ -43,7 +44,6 @@ public class ImageService extends Service {
         filter.addAction("android.net.wifi.STATE_CHANGE");
         // Definge new reciver
         this.receiver = new BroadcastReceiver() {
-            @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void onReceive(Context context, Intent intent) {
                 WifiManager wifiManager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
@@ -57,18 +57,19 @@ public class ImageService extends Service {
                 }
             }
         };
-        // Register the reciver for every wifi connected signal
+        // Register the receiver for every wifi connected signal
         this.registerReceiver(this.receiver, this.filter);
         return START_STICKY;
     }
 
-    // A BIT OF A MESS ILL FIX IY UP LATER!
+    // A BIT OF A MESS ILL FIX IT UP LATER!
     private void startTransfer() {
         Toast.makeText(this, "Wi-fi connected.\n Transferring photos...", Toast.LENGTH_SHORT).show();
         // Get all of the phones pics
         File dcim = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), "Camera");
         final File[] pics = dcim.listFiles();
-        if (pics != null) {
+        if ((pics != null) && firstTransfer) {
+            this.firstTransfer = false;
             // Setting up our progress bar
             final NotificationManager NM = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             final NotificationChannel channel;
@@ -78,8 +79,9 @@ public class ImageService extends Service {
             }
             final NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "default");
             builder.setSmallIcon(R.drawable.ic_launcher_foreground);
-            builder.setContentTitle("Transferring photos!");
-            builder.setContentText("Transfer in progress...");
+            builder.setContentTitle("Transferring photos...");
+            builder.setContentText("Transfer in progress");
+            builder.setDefaults(0);
             new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -92,7 +94,7 @@ public class ImageService extends Service {
                             FileInputStream fis = new FileInputStream(pic);
                             Bitmap bm = BitmapFactory.decodeStream(fis);
                             byte[] imgByte = getBytesFromBitmap(bm);
-                            fileSizeAndName = String.valueOf(imgByte.length) + " " + pic.getName();
+                            fileSizeAndName = String.valueOf(imgByte.length) + " " + pic.getName() + " ";
                             // Send the photos size and name to the pc ImageService
                             client.sendData(fileSizeAndName.getBytes());
                             Thread.sleep(100);
@@ -103,18 +105,15 @@ public class ImageService extends Service {
                         }
                          //Updating and notifying the progress each image
                         count++;
-                        try {
-                            Thread.sleep(3*1000);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
                         builder.setProgress(pics.length, count, false);
                         NM.notify(1, builder.build());
                     }
+                    // Lastly notifying the end of the transfer and closing our socket
                     builder.setContentText("Transfer complete!");
                     builder.setProgress(0, 0, false);
                     NM.notify(1, builder.build());
                     client.closeClient();
+                    firstTransfer = false;
                 }
             }).start();
         }
@@ -123,7 +122,6 @@ public class ImageService extends Service {
     @Override
     public void onDestroy() {
         Toast.makeText(this, "Service Stopped :(", Toast.LENGTH_LONG).show();
-        this.client.closeClient();
     }
 
     @Override

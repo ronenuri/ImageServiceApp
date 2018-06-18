@@ -1,7 +1,5 @@
 package imageservice.imageserviceapp;
 
-
-import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -14,7 +12,7 @@ public class TCPClient {
     public TCPClient() {
         try {
             this.serverAddr = InetAddress.getByName("10.0.2.2");
-            this.socket = new Socket(serverAddr, 1234);
+            this.socket = new Socket(serverAddr, 7999);
         } catch (Exception e) {
             e.printStackTrace();
         }

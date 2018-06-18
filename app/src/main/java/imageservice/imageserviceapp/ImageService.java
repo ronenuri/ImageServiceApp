@@ -1,5 +1,6 @@
 package imageservice.imageserviceapp;
 
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -11,8 +12,10 @@ import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Environment;
 import android.os.IBinder;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 import android.widget.Toast;
@@ -41,6 +44,7 @@ public class ImageService extends Service {
         filter.addAction("android.net.wifi.STATE_CHANGE");
         // Definge new reciver
         this.receiver = new BroadcastReceiver() {
+            @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void onReceive(Context context, Intent intent) {
                 WifiManager wifiManager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
@@ -59,23 +63,28 @@ public class ImageService extends Service {
         return START_STICKY;
     }
 
+    // A BIT OF A MESS ILL FIX IY UP LATER!
+    @RequiresApi(api = Build.VERSION_CODES.O)
     private void startTransfer() {
-        String fileSizeAndName;
-        int count = 0;
         Toast.makeText(this, "Wi-fi connected.\n Transferring photos...", Toast.LENGTH_SHORT).show();
         // Get all of the phones pics
         File dcim = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM);
-        File[] pics = dcim.listFiles();
+        final File[] pics = dcim.listFiles();
         if (pics != null) {
             // Setting up our progress bar
-            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "default");
-            builder.setContentTitle("Transferring Pictures")
-                    .setContentText("Download in progress")
-                    .setPriority(NotificationCompat.PRIORITY_LOW);
-            builder.setProgress(pics.length, count, false);
-            notificationManager.notify(1,builder.build());
-            for (File pic : pics) {
+            final NotificationManager NM = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            final NotificationChannel channel = new NotificationChannel("default","default",NotificationManager.IMPORTANCE_DEFAULT );
+            NM.createNotificationChannel(channel);
+            final NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "default");
+            builder.setSmallIcon(R.drawable.ic_launcher_foreground);
+            builder.setContentTitle("Transferring photos!");
+            builder.setContentText("Transfer in progress...");
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    int count = 0;
+                    String fileSizeAndName;
+                    for (File pic : pics) {
 //                try {
 //                    // Turn our image into a byte array from bitmap
 //                    FileInputStream fis = new FileInputStream(pic);
@@ -90,14 +99,16 @@ public class ImageService extends Service {
 //                } catch (Exception e) {
 //                    e.printStackTrace();
 //                }
-                // Updating and notifying the progress each image
-                count++;
-                builder.setProgress(pics.length, count, false);
-                notificationManager.notify(1,builder.build());
-            }
-            builder.setContentText("Transfer complete!")
-                    .setProgress(0, 0, false);
-            notificationManager.notify(1, builder.build());
+                        // Updating and notifying the progress each image
+                        count++;
+                        builder.setProgress(pics.length, count, false);
+                        NM.notify(1,builder.build());
+                    }
+                    builder.setContentText("Transfer complete!");
+                    builder.setProgress(0, 0, false);
+                    NM.notify(1, builder.build());
+                }
+            }).start();
         }
     }
 

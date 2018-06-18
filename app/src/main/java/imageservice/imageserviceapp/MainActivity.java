@@ -29,12 +29,14 @@ public class MainActivity extends AppCompatActivity {
         stopService(intent);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
     public void displayNotification(View view) {
         final int notify_id = 1;
         final NotificationManager NM = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        final NotificationChannel channel = new NotificationChannel("default","default",NotificationManager.IMPORTANCE_DEFAULT );
-        NM.createNotificationChannel(channel);
+        final NotificationChannel channel;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            channel = new NotificationChannel("default","default", NotificationManager.IMPORTANCE_DEFAULT );
+            NM.createNotificationChannel(channel);
+        }
         final NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "default");
         builder.setSmallIcon(R.drawable.ic_launcher_foreground);
         builder.setContentTitle("Transferring photos");
@@ -43,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 int j;
-                for (j = 0; j <= 100; j += 5) {
+                for (j = 0; j <= 100; j += 20) {
                     builder.setProgress(100, j, false);
                     NM.notify(notify_id, builder.build());
                     try {

@@ -33,7 +33,6 @@ public class ImageService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        this.client = new TCPClient();
     }
 
     @Override
@@ -64,17 +63,19 @@ public class ImageService extends Service {
     }
 
     // A BIT OF A MESS ILL FIX IY UP LATER!
-    @RequiresApi(api = Build.VERSION_CODES.O)
     private void startTransfer() {
         Toast.makeText(this, "Wi-fi connected.\n Transferring photos...", Toast.LENGTH_SHORT).show();
         // Get all of the phones pics
-        File dcim = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM);
+        File dcim = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), "Camera");
         final File[] pics = dcim.listFiles();
         if (pics != null) {
             // Setting up our progress bar
             final NotificationManager NM = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            final NotificationChannel channel = new NotificationChannel("default","default",NotificationManager.IMPORTANCE_DEFAULT );
-            NM.createNotificationChannel(channel);
+            final NotificationChannel channel;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                channel = new NotificationChannel("default", "default", NotificationManager.IMPORTANCE_DEFAULT);
+                NM.createNotificationChannel(channel);
+            }
             final NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "default");
             builder.setSmallIcon(R.drawable.ic_launcher_foreground);
             builder.setContentTitle("Transferring photos!");
@@ -82,31 +83,38 @@ public class ImageService extends Service {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
+                    TCPClient client = new TCPClient();
                     int count = 0;
                     String fileSizeAndName;
                     for (File pic : pics) {
-//                try {
-//                    // Turn our image into a byte array from bitmap
-//                    FileInputStream fis = new FileInputStream(pic);
-//                    Bitmap bm = BitmapFactory.decodeStream(fis);
-//                    byte[] imgByte = getBytesFromBitmap(bm);
-//                    fileSizeAndName = String.valueOf(imgByte.length) + " " + pic.getName();
-//                    // Send the photos size and name to the pc ImageService
-//                    this.client.sendData(fileSizeAndName.getBytes());
-//                    Thread.sleep(100);
-//                    // Send the actuall photo to the pc ImageService
-//                    this.client.sendData(imgByte);
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-                        // Updating and notifying the progress each image
+                        try {
+                            // Turn our image into a byte array from bitmap
+                            FileInputStream fis = new FileInputStream(pic);
+                            Bitmap bm = BitmapFactory.decodeStream(fis);
+                            byte[] imgByte = getBytesFromBitmap(bm);
+                            fileSizeAndName = String.valueOf(imgByte.length) + " " + pic.getName();
+                            // Send the photos size and name to the pc ImageService
+                            client.sendData(fileSizeAndName.getBytes());
+                            Thread.sleep(100);
+                            // Send the actuall photo to the pc ImageService
+                            client.sendData(imgByte);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                         //Updating and notifying the progress each image
                         count++;
+                        try {
+                            Thread.sleep(3*1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                         builder.setProgress(pics.length, count, false);
-                        NM.notify(1,builder.build());
+                        NM.notify(1, builder.build());
                     }
                     builder.setContentText("Transfer complete!");
                     builder.setProgress(0, 0, false);
                     NM.notify(1, builder.build());
+                    client.closeClient();
                 }
             }).start();
         }

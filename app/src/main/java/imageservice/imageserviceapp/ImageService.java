@@ -42,7 +42,7 @@ public class ImageService extends Service {
         // Add wifi connection and change filter
         filter.addAction("android.net.wifi.supplicant.CONNECTION_CHANGE");
         filter.addAction("android.net.wifi.STATE_CHANGE");
-        // Definge new reciver
+        // Define a new reciver for wifi connection status change
         this.receiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -73,6 +73,7 @@ public class ImageService extends Service {
             // Setting up our progress bar
             final NotificationManager NM = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             final NotificationChannel channel;
+            // Creating a channel if api is 26 or higher
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                 channel = new NotificationChannel("default", "default", NotificationManager.IMPORTANCE_DEFAULT);
                 NM.createNotificationChannel(channel);
@@ -98,12 +99,12 @@ public class ImageService extends Service {
                             // Send the photos size and name to the pc ImageService
                             client.sendData(fileSizeAndName.getBytes());
                             Thread.sleep(100);
-                            // Send the actuall photo to the pc ImageService
+                            // Send the actual photo to the pc ImageService
                             client.sendData(imgByte);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
-                         //Updating and notifying the progress each image
+                         // Updating the progress with each image sent
                         count++;
                         builder.setProgress(pics.length, count, false);
                         NM.notify(1, builder.build());
@@ -129,8 +130,10 @@ public class ImageService extends Service {
         return null;
     }
 
+    // Getting a byte array from a given bitmap
     public byte[] getBytesFromBitmap(Bitmap bitmap) {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        // Compressing it using PNG format
         bitmap.compress(Bitmap.CompressFormat.PNG, 70, stream);
         return stream.toByteArray();
     }

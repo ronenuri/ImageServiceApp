@@ -9,6 +9,7 @@ public class TCPClient {
     private InetAddress serverAddr;
     private Socket socket;
 
+    // Creating our tcp client
     public TCPClient() {
         try {
             this.serverAddr = InetAddress.getByName("10.0.2.2");

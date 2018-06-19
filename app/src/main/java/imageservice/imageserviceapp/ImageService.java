@@ -29,11 +29,14 @@ public class ImageService extends Service {
     private BroadcastReceiver receiver;
     private final IntentFilter filter = new IntentFilter();
     private boolean firstTransfer;
+    // Static member for simply telling if the service is running or not
+    public static boolean serviceRunning = false;
 
     @Override
     public void onCreate() {
         super.onCreate();
         this.firstTransfer = true;
+        serviceRunning = true;
     }
 
     @Override
@@ -62,7 +65,6 @@ public class ImageService extends Service {
         return START_STICKY;
     }
 
-    // A BIT OF A MESS ILL FIX IT UP LATER!
     private void startTransfer() {
         Toast.makeText(this, "Wi-fi connected.\n Transferring photos...", Toast.LENGTH_SHORT).show();
         // Get all of the phones pics
@@ -114,7 +116,7 @@ public class ImageService extends Service {
                     builder.setProgress(0, 0, false);
                     NM.notify(1, builder.build());
                     client.closeClient();
-                    firstTransfer = false;
+                    firstTransfer = true;
                 }
             }).start();
         }
@@ -123,6 +125,9 @@ public class ImageService extends Service {
     @Override
     public void onDestroy() {
         Toast.makeText(this, "Service Stopped :(", Toast.LENGTH_LONG).show();
+        // Stopping our service and announcing it stopped
+        serviceRunning = false;
+        super.onDestroy();
     }
 
     @Override

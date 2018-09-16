@@ -1,18 +1,14 @@
 package imageservice.imageserviceapp;
 
 import android.Manifest;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.support.annotation.RequiresApi;
+import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
@@ -30,12 +26,12 @@ public class MainActivity extends AppCompatActivity {
         // If the service is running
         if (ImageService.serviceRunning) {
             // We won't enable the start service button upon creation
-            Button btn = findViewById(R.id.startServiceBtn);
-            btn.setEnabled(false);
+            Button startBtn = findViewById(R.id.startServiceBtn);
+            startBtn.setEnabled(false);
         } else {
             // Otherwise not enabling the stop service button
-            Button btn = findViewById(R.id.stopServiceBtn);
-            btn.setEnabled(false);
+            Button stopBtn = findViewById(R.id.stopServiceBtn);
+            stopBtn.setEnabled(false);
         }
 
         context = this;
@@ -64,22 +60,22 @@ public class MainActivity extends AppCompatActivity {
     public void startServiceBtn(View view) {
         Intent intent = new Intent(this, ImageService.class);
         // Disabling the start service button upon activation
-        Button btn1 = findViewById(R.id.startServiceBtn);
-        btn1.setEnabled(false);
+        Button startBtn = findViewById(R.id.startServiceBtn);
+        startBtn.setEnabled(false);
         // Enabling the stop service button only
-        Button btn2 = findViewById(R.id.stopServiceBtn);
-        btn2.setEnabled(true);
+        Button stopBtn = findViewById(R.id.stopServiceBtn);
+        stopBtn.setEnabled(true);
         startService(intent);
     }
 
     public void stopServiceBtn(View view) {
         Intent intent = new Intent(this, ImageService.class);
         // Enabling the start service button upon closing the service
-        Button btn1 = findViewById(R.id.startServiceBtn);
-        btn1.setEnabled(true);
+        Button startBtn = findViewById(R.id.startServiceBtn);
+        startBtn.setEnabled(true);
         // Disabling the stop service button upon closing the service
-        Button btn2 = findViewById(R.id.stopServiceBtn);
-        btn2.setEnabled(false);
+        Button stopBtn = findViewById(R.id.stopServiceBtn);
+        stopBtn.setEnabled(false);
         stopService(intent);
     }
 }
